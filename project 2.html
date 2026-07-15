@@ -1,0 +1,286 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0"/>
+  <title>Calculator — Pinnacle Labs</title>
+  <link href="https://fonts.googleapis.com/css2?family=DM+Mono:wght@400;500&family=Syne:wght@600;800&display=swap" rel="stylesheet"/>
+  <style>
+    *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+    :root {
+      --green-dark:  #1a7a3c;
+      --green-mid:   #2eaa5a;
+      --green-light: #a8e6bc;
+      --green-bg:    #d6f5e3;
+      --cream:       #f4fbf6;
+      --text-dark:   #0d2e1a;
+      --text-mid:    #2a5c3a;
+      --shadow:      0 8px 32px rgba(20, 90, 50, 0.18);
+    }
+    body {
+      min-height: 100vh;
+      background: var(--green-bg);
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      font-family: 'Syne', sans-serif;
+      background-image:
+        radial-gradient(circle at 20% 20%, rgba(46,170,90,0.13) 0%, transparent 60%),
+        radial-gradient(circle at 80% 80%, rgba(26,122,60,0.10) 0%, transparent 60%);
+    }
+    .brand {
+      text-align: center;
+      margin-bottom: 18px;
+    }
+    .brand-name {
+      font-size: 1.05rem;
+      font-weight: 800;
+      letter-spacing: 0.18em;
+      color: var(--green-dark);
+      text-transform: uppercase;
+    }
+    .brand-sub {
+      font-size: 0.72rem;
+      letter-spacing: 0.12em;
+      color: var(--green-mid);
+      text-transform: uppercase;
+      margin-top: 2px;
+    }
+    .calc-wrap {
+      background: var(--cream);
+      border-radius: 24px;
+      box-shadow: var(--shadow), 0 1px 0 rgba(255,255,255,0.8) inset;
+      padding: 20px;
+      width: 320px;
+      border: 1.5px solid rgba(46,170,90,0.25);
+    }
+    .display {
+      background: var(--green-dark);
+      border-radius: 14px;
+      padding: 18px 20px 14px;
+      margin-bottom: 16px;
+      min-height: 90px;
+      display: flex;
+      flex-direction: column;
+      justify-content: flex-end;
+      align-items: flex-end;
+      position: relative;
+      overflow: hidden;
+    }
+    .display::before {
+      content: '';
+      position: absolute;
+      inset: 0;
+      background: linear-gradient(135deg, rgba(255,255,255,0.06) 0%, transparent 60%);
+      border-radius: 14px;
+      pointer-events: none;
+    }
+    .display-expr {
+      font-family: 'DM Mono', monospace;
+      font-size: 0.78rem;
+      color: var(--green-light);
+      opacity: 0.7;
+      min-height: 18px;
+      word-break: break-all;
+      text-align: right;
+    }
+    .display-main {
+      font-family: 'DM Mono', monospace;
+      font-size: 2.4rem;
+      font-weight: 500;
+      color: #ffffff;
+      line-height: 1.1;
+      word-break: break-all;
+      text-align: right;
+      transition: font-size 0.1s;
+    }
+    .display-main.shrink { font-size: 1.6rem; }
+    .btn-grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 10px;
+    }
+    button {
+      font-family: 'Syne', sans-serif;
+      font-weight: 600;
+      font-size: 1.05rem;
+      height: 58px;
+      border: none;
+      border-radius: 12px;
+      cursor: pointer;
+      transition: transform 0.08s, box-shadow 0.08s, background 0.1s;
+      outline: none;
+      position: relative;
+      letter-spacing: 0.02em;
+    }
+    button:active { transform: scale(0.93); }
+    .btn-num {
+      background: #e8f5ed;
+      color: var(--text-dark);
+      box-shadow: 0 3px 0 #bfdfcc;
+    }
+    .btn-num:hover { background: #d4eddc; }
+    .btn-op {
+      background: var(--green-mid);
+      color: #fff;
+      box-shadow: 0 3px 0 #1d7a40;
+    }
+    .btn-op:hover { background: #27964f; }
+    .btn-clear {
+      background: #ff6b6b;
+      color: #fff;
+      box-shadow: 0 3px 0 #c94040;
+    }
+    .btn-clear:hover { background: #e85555; }
+    .btn-del {
+      background: #ffb347;
+      color: #fff;
+      box-shadow: 0 3px 0 #c87d20;
+    }
+    .btn-del:hover { background: #f0a030; }
+    .btn-eq {
+      background: var(--green-dark);
+      color: #fff;
+      box-shadow: 0 3px 0 #0d4e22;
+      font-size: 1.3rem;
+    }
+    .btn-eq:hover { background: #155e2e; }
+    .span2 { grid-column: span 2; }
+    .display-main.error { color: #ff8080; }
+    button::after {
+      content: '';
+      position: absolute;
+      inset: 0;
+      border-radius: inherit;
+      background: rgba(255,255,255,0.18);
+      opacity: 0;
+      transition: opacity 0.15s;
+    }
+    button:active::after { opacity: 1; }
+    footer {
+      margin-top: 14px;
+      font-size: 0.68rem;
+      color: var(--green-mid);
+      letter-spacing: 0.08em;
+      text-align: center;
+      opacity: 0.7;
+    }
+  </style>
+</head>
+<body>
+  <div class="brand">
+    <div class="brand-name">⬡ Online Calculator</div>
+  </div>
+  <div class="calc-wrap">
+    <div class="display">
+      <div class="display-expr" id="expr"></div>
+      <div class="display-main" id="main">0</div>
+    </div>
+    <div class="btn-grid">
+      <button class="btn-clear" onclick="clearAll()">AC</button>
+      <button class="btn-del"   onclick="deleteLast()">⌫</button>
+      <button class="btn-op"    onclick="inputOp('%')">%</button>
+      <button class="btn-op"    onclick="inputOp('÷')">÷</button>
+      <button class="btn-num" onclick="inputNum('7')">7</button>
+      <button class="btn-num" onclick="inputNum('8')">8</button>
+      <button class="btn-num" onclick="inputNum('9')">9</button>
+      <button class="btn-op"  onclick="inputOp('×')">×</button>
+      <button class="btn-num" onclick="inputNum('4')">4</button>
+      <button class="btn-num" onclick="inputNum('5')">5</button>
+      <button class="btn-num" onclick="inputNum('6')">6</button>
+      <button class="btn-op"  onclick="inputOp('−')">−</button>
+      <button class="btn-num" onclick="inputNum('1')">1</button>
+      <button class="btn-num" onclick="inputNum('2')">2</button>
+      <button class="btn-num" onclick="inputNum('3')">3</button>
+      <button class="btn-op"  onclick="inputOp('+')">+</button>
+      <button class="btn-num span2" onclick="inputNum('0')">0</button>
+      <button class="btn-num"       onclick="inputDot()">.</button>
+      <button class="btn-eq"        onclick="calculate()">=</button>
+    </div>
+  </div>
+  <footer>Basic Calculator · + − × ÷</footer>
+  <script>
+    let currentVal = '0';
+    let expression = '';
+    let justCalc   = false;
+    const mainEl = document.getElementById('main');
+    const exprEl = document.getElementById('expr');
+    function updateDisplay() {
+      mainEl.textContent = currentVal;
+      mainEl.classList.toggle('shrink', currentVal.length > 10);
+      mainEl.classList.remove('error');
+    }
+    function inputNum(n) {
+      if (justCalc) { expression = ''; justCalc = false; }
+      if (currentVal === '0' && n !== '.') currentVal = n;
+      else currentVal += n;
+      updateDisplay();
+    }
+    function inputDot() {
+      if (justCalc) { currentVal = '0'; expression = ''; justCalc = false; }
+      if (!currentVal.includes('.')) currentVal += '.';
+      updateDisplay();
+    }
+    function inputOp(op) {
+      justCalc = false;
+      if (expression && '÷×−+%'.includes(expression.slice(-1))) {
+        expression = expression.slice(0, -1) + op;
+      } else {
+        expression += currentVal + op;
+      }
+      exprEl.textContent = expression;
+      currentVal = '0';
+    }
+    function calculate() {
+      if (!expression) return;
+      const full = expression + currentVal;
+      exprEl.textContent = full + ' =';
+      try {
+        let safe = full
+          .replace(/÷/g, '/')
+          .replace(/×/g, '*')
+          .replace(/−/g, '-')
+          .replace(/(\d+)%/g, '($1/100)');
+        let result = Function('"use strict"; return (' + safe + ')')();
+        if (!isFinite(result)) throw new Error('Division by zero');
+        result = +parseFloat(result.toPrecision(12));
+        currentVal = String(result);
+        expression = '';
+        justCalc   = true;
+        updateDisplay();
+      } catch {
+        mainEl.textContent = 'Error';
+        mainEl.classList.add('error');
+        expression = '';
+        currentVal = '0';
+        justCalc   = false;
+      }
+    }
+    function clearAll() {
+      currentVal = '0';
+      expression = '';
+      justCalc   = false;
+      exprEl.textContent = '';
+      updateDisplay();
+    }
+    function deleteLast() {
+      if (justCalc) return;
+      currentVal = currentVal.length > 1 ? currentVal.slice(0, -1) : '0';
+      updateDisplay();
+    }
+    document.addEventListener('keydown', e => {
+      if (e.key >= '0' && e.key <= '9') inputNum(e.key);
+      else if (e.key === '.') inputDot();
+      else if (e.key === '+') inputOp('+');
+      else if (e.key === '-') inputOp('−');
+      else if (e.key === '*') inputOp('×');
+      else if (e.key === '/') { e.preventDefault(); inputOp('÷'); }
+      else if (e.key === '%') inputOp('%');
+      else if (e.key === 'Enter' || e.key === '=') calculate();
+      else if (e.key === 'Backspace') deleteLast();
+      else if (e.key === 'Escape') clearAll();
+    });
+  </script>
+</body>
+</html>
